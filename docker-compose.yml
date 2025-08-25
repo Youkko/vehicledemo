@@ -1,0 +1,66 @@
+services:
+  db:
+    container_name: vehicles-db
+    image: postgres:16
+    environment:
+      POSTGRES_USER: vehicles
+      POSTGRES_PASSWORD: C@!xaF0rt3
+      POSTGRES_DB: vehicles
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: vehicles
+      RABBITMQ_DEFAULT_PASS: Tu3lh0!
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  consumer:
+    container_name: vehicles-consumer
+    build:
+      context: ./vehicles-consumer
+      dockerfile: Dockerfile
+    environment:
+      RABBIT_USER: vehicles
+      RABBIT_PASS: Tu3lh0!
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
+      RABBIT_VEHICLES_QUEUE: vehicles_queue
+    depends_on:
+      - rabbitmq
+
+  api:
+    container_name: vehicles-api
+    build:
+      context: ./vehicles-api
+      dockerfile: Dockerfile
+    image: vehicles-api
+    environment:
+      PORT: 3000
+      RABBIT_USER: vehicles
+      RABBIT_PASS: Tu3lh0!
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
+      RABBIT_VEHICLES_QUEUE: vehicles_queue
+    depends_on:
+      - rabbitmq
+    ports:
+      - "3000:3000"
+
+volumes:
+  db:
+    driver: local
+  userdata:
