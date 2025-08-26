@@ -16,7 +16,7 @@ export class AppService {
       return response.data;
     } catch (error) {
       console.error('Error fetching vehicles:', error);
-      throw error;
+      return [];
     }
   }
 

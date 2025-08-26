@@ -6,6 +6,7 @@ import {
   Res,
   Post,
   Body,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { AppService } from './app.service';
@@ -74,6 +75,17 @@ export class AppController {
     } catch (error) {
       console.error('Error deleting vehicle:', error);
       res.redirect('/');
+    }
+  }
+
+  @Get('api/vehicles')
+  async getVehiclesApi() {
+    try {
+      const vehicles = await this.appService.findAll();
+      return vehicles;
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
+      throw new InternalServerErrorException(`Erro ao buscar veículos: ${error}`);
     }
   }
 }
