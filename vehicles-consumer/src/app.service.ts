@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
-//import { CreateVehicleDto } from './dto/create-vehicle.dto';
-//import { UpdateVehicleDto } from './dto/update-vehicle.dto';
+import { Vehicle } from './entities/vehicle.entity';
 import {
   CreateVehicleParams,
   FindVehicleParams,
@@ -9,27 +10,19 @@ import {
   DeleteVehicleParams
 } from './_interfaces'
 
-class Veiculo {
-  id!: number;
-  placa!: string;
-  chassi!: string;
-  renavam!: string;
-  modelo!: string;
-  marca!: string;
-  ano!: number;
-}
-
 @Injectable()
 export class AppService {
-  vehicles: Veiculo[] = [];
-  id: number = 1;
-  
-  handleVehicleFindAll() {
-    return this.vehicles;
+  constructor(
+    @InjectRepository(Vehicle)
+    private repo: Repository<Vehicle>,
+  ) {}
+
+  async handleVehicleFindAll(): Promise<Vehicle[]> {
+    return this.repo.find();
   }
   
-  handleVehicleFindOne(payload: FindVehicleParams): Veiculo {
-    const vehicle = this.vehicles.find((v) => payload.id === v.id);
+  async handleVehicleFindOne(payload: FindVehicleParams): Promise<Vehicle> {
+    const vehicle = await this.repo.findOne({ where: { id: payload.id } });
     if (!vehicle) {
       throw new RpcException({
         statusCode: 404,
@@ -40,22 +33,24 @@ export class AppService {
     return vehicle;
   }
 
-  handleVehicleCreate(payload: CreateVehicleParams) {
-    console.log(`Novo veiculo - ${payload.data.marca} ${payload.data.modelo} ${payload.data.ano}, ${payload.data.placa}`);
-    const data = { id: this.id++, ...payload.data };
-    this.vehicles.push(data);
-    return data;
+  async handleVehicleCreate(payload: CreateVehicleParams): Promise<Vehicle> {
+    const vehicle = this.repo.create(payload.data);
+    return this.repo.save(vehicle);
   }
 
-  handleVehicleUpdate(payload: UpdateVehicleParams) {
-    const vehicle = this.handleVehicleFindOne({ id: payload.id });
-    Object.assign(vehicle, payload.newData);
-    const updated = this.handleVehicleFindOne({ id: payload.id });
-    console.log(`Vehicle ${vehicle.marca} ${vehicle.modelo} ${vehicle.ano}, ${vehicle.placa} (${vehicle.renavam}/${vehicle.chassi}) updated to ${updated.marca} ${updated.modelo} ${updated.ano}, ${updated.placa} (${updated.renavam}/${updated.chassi})`);
-    return updated;
+  async handleVehicleUpdate(payload: UpdateVehicleParams): Promise<Vehicle> {
+    await this.repo.update(payload.id, payload.newData);
+    return await this.handleVehicleFindOne(payload);
   }
 
-  handleVehicleDeletion(payload: DeleteVehicleParams) {
-    this.vehicles = this.vehicles.filter((v) => v.id !== payload.id);
+  async handleVehicleDeletion(payload: DeleteVehicleParams): Promise<void> {
+    const result = await this.repo.delete(payload.id);
+    if (result.affected === 0) {
+      throw new RpcException({
+        statusCode: 404,
+        message: `Vehicle with ID ${payload.id} was not found`,
+        error: 'Not Found'
+      });
+    }
   }
 }
