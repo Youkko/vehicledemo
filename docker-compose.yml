@@ -66,6 +66,19 @@ services:
     ports:
       - "3000:3000"
 
+  frontend:
+    container_name: vehicles-frontend
+    build:
+      context: ./vehicles-front
+      dockerfile: Dockerfile
+    environment:
+      API_URL: http://api
+      API_PORT: 3000
+    ports:
+      - "81:81"
+    depends_on:
+      - api
+
 volumes:
   db:
     driver: local
