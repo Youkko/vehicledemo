@@ -1,0 +1,25 @@
+.container {
+  padding: 16px;
+}
+.table-wrapper {
+  overflow: auto;
+}
+.full-width {
+  width: 100%;
+}
+.toolbar {
+  margin: 12px 0;
+  display: flex;
+  justify-content: flex-end;
+}
+.center {
+  text-align: center;
+}
+@media (max-width: 768px) {
+  .toolbar {
+    justify-content: stretch;
+  }
+  table {
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,14 @@
+.spacer {
+  flex: 1;
+}
+
+mat-toolbar a {
+  color: white;
+  text-decoration: none;
+  margin-left: 8px;
+}
+
+.snackbar-error {
+  background-color: #d32f2f !important;
+  color: #fff !important;
+}

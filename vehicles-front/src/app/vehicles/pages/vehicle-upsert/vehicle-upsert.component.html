@@ -1,0 +1,51 @@
+<div class="container">
+  <h1>{{ id ? 'Editar' : 'Novo' }} veículo</h1>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+    <mat-form-field appearance="outline">
+      <mat-label>Placa</mat-label>
+      <input matInput formControlName="placa" />
+      <mat-error *ngIf="form.controls['placa'].hasError('required')">Obrigatório</mat-error>
+      <mat-error *ngIf="form.controls['placa'].hasError('pattern')">Formato inválido</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Chassi</mat-label>
+      <input matInput formControlName="chassi" />
+      <mat-error *ngIf="form.controls['chassi'].invalid">Informe o chassi</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Renavam</mat-label>
+      <input matInput formControlName="renavam" />
+      <mat-error *ngIf="form.controls['renavam'].invalid">Informe o renavam</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Modelo</mat-label>
+      <input matInput formControlName="modelo" />
+      <mat-error *ngIf="form.controls['modelo'].invalid">Informe o modelo</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Marca</mat-label>
+      <input matInput formControlName="marca" />
+      <mat-error *ngIf="form.controls['marca'].invalid">Informe a marca</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Ano</mat-label>
+      <input matInput type="number" formControlName="ano" />
+      <mat-error *ngIf="form.controls['ano'].invalid">Ano inválido</mat-error>
+    </mat-form-field>
+
+    <div class="actions">
+      <button mat-raised-button type="button" (click)="cancel()">Cancelar</button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="loading">
+        {{ id ? 'Salvar' : 'Criar' }}
+      </button>
+    </div>
+  </form>
+
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+</div>

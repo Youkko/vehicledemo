@@ -1,16 +1,16 @@
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
-import { AppModule } from './app.module';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
+import { routes } from './app/app.routes';
+import { App } from './app/app';
 
-async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
-  app.setBaseViewsDir(join(__dirname, '..', 'views'));
-  app.setViewEngine('ejs');
-  
-  const port = parseInt(process.env.PORT ?? '81');
-  await app.listen(port);
-  console.log(`Frontend running on http://localhost:${port}`);
-}
-bootstrap().catch((error) => console.error(error));
+bootstrapApplication(App, {
+  providers: [
+    provideRouter(routes),
+    provideAnimations(),
+    provideHttpClient(
+      withInterceptorsFromDi()
+    ),
+  ]
+}).catch(err => console.error(err));
