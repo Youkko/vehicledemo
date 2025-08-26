@@ -39,8 +39,14 @@ services:
       RABBIT_HOST: rabbitmq
       RABBIT_PORT: 5672
       RABBIT_VEHICLES_QUEUE: vehicles_queue
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: vehicles
+      DATABASE_PASS: C@!xaF0rt3
+      DATABASE_NAME: vehicles
     depends_on:
       - rabbitmq
+      - db
 
   api:
     container_name: vehicles-api

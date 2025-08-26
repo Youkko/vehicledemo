@@ -1,25 +1,25 @@
-//import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 
-//@Entity()
+@Entity()
 export class Vehicle {
-//  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn()
   id!: number;
 
-//  @Column()
+  @Column()
   placa!: string;
 
-//  @Column()
+  @Column()
   chassi!: string;
 
-//  @Column()
+  @Column()
   renavam!: string;
 
-//  @Column()
+  @Column()
   modelo!: string;
 
-//  @Column()
+  @Column()
   marca!: string;
 
-//  @Column()
+  @Column()
   ano!: number;
 }
