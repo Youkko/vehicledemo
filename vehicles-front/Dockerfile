@@ -1,23 +1,18 @@
-FROM node:18-alpine As development
+FROM node:22-alpine AS build
+
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
+
 COPY . .
-RUN npm run build
+RUN npm run build -- --configuration production --output-path=dist/vehicles-front
 
-FROM node:18-alpine As production
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
+FROM nginx:alpine
 
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install --only=production
-COPY . .
-COPY --from=development /app/dist ./dist
-COPY views ./views
+RUN rm -rf /usr/share/nginx/html/*
+COPY --from=build /app/dist/vehicles-front /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 81
-
-CMD ["node", "dist/main"]
+CMD ["nginx", "-g", "daemon off;"]
