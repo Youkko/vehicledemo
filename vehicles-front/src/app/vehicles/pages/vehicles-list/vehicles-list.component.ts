@@ -1,15 +1,25 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
-import { BehaviorSubject, interval, switchMap, takeUntil } from 'rxjs';
-import { finalize, takeWhile } from 'rxjs/operators';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  signal,
+  ChangeDetectorRef,
+  ViewChild,
+} from '@angular/core';
+import { interval, switchMap } from 'rxjs';
+import { takeWhile } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { VehiclesService, Vehicle } from '../../vehicles.service';
 import { CommonModule } from '@angular/common';
-import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 
 @Component({
   selector: 'app-vehicles-list',
@@ -18,37 +28,60 @@ import { provideAnimations } from '@angular/platform-browser/animations';
   imports: [
     CommonModule,
     MatTableModule,
+    MatPaginatorModule,
+    MatSortModule,
     MatProgressBarModule,
     MatIconModule,
     MatSnackBarModule,
-    MatButtonModule
+    MatButtonModule,
   ],
   templateUrl: './vehicles-list.component.html',
-  styleUrls: ['./vehicles-list.component.scss']
+  styleUrls: ['./vehicles-list.component.scss'],
 })
-export class VehiclesListComponent implements OnInit, OnDestroy {
+export class VehiclesListComponent implements OnInit, AfterViewInit, OnDestroy {
   displayedColumns = ['id', 'placa', 'modelo', 'marca', 'ano', 'actions'];
-  vehicles$ = new BehaviorSubject<Vehicle[]>([]);
+  dataSource = new MatTableDataSource<Vehicle>([]);
   loading = signal(false);
 
-  private pollInterval = 5000;
+  private pollInterval = 2000;
   private alive = true;
 
-  constructor(private api: VehiclesService, private router: Router) {}
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
+
+  constructor(
+    private api: VehiclesService,
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    private snackBar: MatSnackBar
+  ) {}
 
   ngOnInit(): void {
-    // primeira carga
     this.loadVehicles();
 
-    // polling periódico
     interval(this.pollInterval)
       .pipe(
         takeWhile(() => this.alive),
         switchMap(() => this.api.findAll())
       )
-      .subscribe(list => {
-        this.vehicles$.next(list);
+      .subscribe((list) => {
+        this.dataSource.data = list;
+        this.cdr.detectChanges();
       });
+  }
+
+  ngAfterViewInit(): void {
+    // Configura paginação e ordenação
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+
+    // Ordenação padrão: ID ascendente
+    // Atrasando para o próximo ciclo de detecção para evitar NG0100
+    setTimeout(() => {
+      this.sort.active = 'id';
+      this.sort.direction = 'asc';
+      this.sort.sortChange.emit();
+    });
   }
 
   ngOnDestroy(): void {
@@ -57,11 +90,15 @@ export class VehiclesListComponent implements OnInit, OnDestroy {
 
   private loadVehicles() {
     this.loading.set(true);
-    this.api.findAll()
-      .pipe(finalize(() => this.loading.set(false)))
-      .subscribe(list => {
-        this.vehicles$.next(list);
-      });
+    this.api.findAll().subscribe({
+      next: (list) => {
+        this.dataSource.data = list;
+        this.loading.set(false);
+        this.cdr.detectChanges();
+      },
+      error: () => this.loading.set(false),
+      complete: () => this.loading.set(false),
+    });
   }
 
   new() {
@@ -74,10 +111,21 @@ export class VehiclesListComponent implements OnInit, OnDestroy {
 
   remove(v: Vehicle) {
     this.loading.set(true);
+
     this.api.remove(v.id).subscribe({
-      next: () => this.loadVehicles(),
-      error: () => this.loading.set(false),
-      complete: () => this.loading.set(false)
+      next: () => {
+        this.loading.set(false);
+        this.snackBar.open('Veículo removido com sucesso!', 'Fechar', { duration: 3000 });
+        this.loadVehicles();
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.snackBar.open('Erro ao remover o veículo.', 'Fechar', {
+          duration: 3000,
+          panelClass: ['snackbar-error'],
+        });
+        console.error(err);
+      },
     });
   }
 }
